@@ -14,8 +14,10 @@
     --panel-border: #343841;
     --text: #ecedee;
     --text-dim: #9298a3;
-    --accent: #f0a63a;
-    --accent-soft: rgba(240, 166, 58, 0.14);
+    --text-dim2: #5e5e66;
+    --text-dim3: #49494e;
+    --accent: #F95581;
+    --accent-soft: #181818;
   }
 
   * { box-sizing: border-box; }
@@ -148,9 +150,8 @@
     border: 1px solid var(--panel-border);
     border-radius: 6px;
     padding: 11px 12px;
-    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
     font-size: 12.5px;
-    color: var(--accent);
+    color: var(--text);
     margin-bottom: 10px;
   }
 
@@ -159,11 +160,37 @@
   .copied { font-size: 13px; color: var(--accent); opacity: 0; transition: opacity 0.2s ease; }
   .copied.show { opacity: 1; }
 
-  .hint {
+.hint {
     color: var(--text-dim);
     font-size: 12.5px;
     line-height: 1.7;
     margin: 16px 0 0;
+    padding-left: 20px;
+}
+
+.hint li {
+    margin: 4px 0;
+}
+
+    footer {
+    margin-top: 32px;
+    text-align: center;
+    color: var(--text-dim3);
+    font-size: 11px;
+    line-height: 1.6;
+  }
+
+  footer p {
+    margin: 3px 0;
+  }
+
+  footer a {
+    color: inherit;
+    text-decoration: none;
+  }
+
+  footer a:hover {
+    color: var(--text-dim2);
   }
 </style>
 </head>
@@ -193,9 +220,17 @@
     </div>
   </div>
 
-  <p class="hint">
-    OBSでは「ローカルファイル」ではなく通常のURLとして追加してください。推奨サイズは幅1920×高さ1080等の16:9比率です。
-  </p>
+  <ul class="hint">
+   <li>OBSでは「ローカルファイル」ではなく通常のURLとして追加してください。</li>
+    <li>推奨サイズは幅1920×高さ1080等の16:9比率です。</li>
+    <li>動画の音声を流したい場合、ブラウザソースのプロパティで「OBSで音量を制御する」にチェックを入れてください。</li>
+  </ul>
+
+  <footer>
+    <p>Created by そぼろ忍</p>
+    <p><a href="https://x.com/soboronin" target="_blank" rel="noopener noreferrer">X: @soboronin</a></p>
+  </footer>
+
 </main>
 
 <script>
