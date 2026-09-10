@@ -1,7 +1,9 @@
 <!DOCTYPE html>
-<html>
+<html lang="ja">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
 <title>Random Playlist Player</title>
 <style>
   html, body {
@@ -50,7 +52,7 @@
 <script src="https://www.youtube.com/iframe_api"></script>
 <script>
   // デフォルトのプレイリストID(URLで指定がない場合に使われます)
-  const DEFAULT_PLAYLIST_ID = 'PLU-G4F_Bmqg0';
+  const DEFAULT_PLAYLIST_ID = 'PLW1Xp7ZQlPZY';
 
   // ?list=プレイリストID または ?list=プレイリストのフルURL で上書き可能
   function getPlaylistId() {
@@ -62,7 +64,16 @@
     return raw;
   }
 
+  // ?mute=0 で音声ありに切り替え可能。指定がなければミュート(既定値)
+  function getWantMute() {
+    const params = new URLSearchParams(window.location.search);
+    const raw = params.get('mute');
+    if (raw === '0' || raw === 'false') return false;
+    return true;
+  }
+
   const PLAYLIST_ID = getPlaylistId();
+  const WANT_MUTE = getWantMute();
   const START_HIDE_MS = 1200;   // 開始直後、タイトルバーが消えるまでの待ち時間
   const END_SKIP_SEC = 1.5;     // 終了何秒前に次へ切り替えるか
 
@@ -105,10 +116,22 @@
   }
 
   function onPlayerReady(event) {
+    // 自動再生を確実に通すため、開始は常にミュートで
     event.target.mute();
     event.target.setVolume(0);
     disableCaptions(event.target);
     event.target.playVideo();
+  }
+
+  // 希望のミュート状態を反映する(自動再生開始後に呼ぶ)
+  function applyMuteState() {
+    if (WANT_MUTE) {
+      player.mute();
+      player.setVolume(0);
+    } else {
+      player.unMute();
+      player.setVolume(100);
+    }
   }
 
   function disableCaptions(p) {
@@ -140,6 +163,7 @@
 
     if (state === YT.PlayerState.PLAYING) {
       disableCaptions(player);
+      applyMuteState();
       stopEndWatcher();
       startEndWatcher();
 
