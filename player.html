@@ -49,10 +49,14 @@
   </div>
 </div>
 
+<div id="diag" style="display:none; position:absolute; top:0; left:0; width:100%; height:100%; color:#fff; font-family:sans-serif; font-size:14px; padding:20px; box-sizing:border-box; background:#000;">
+
+</div>
+
 <script src="https://www.youtube.com/iframe_api"></script>
 <script>
   // デフォルトのプレイリストID(URLで指定がない場合に使われます)
-  const DEFAULT_PLAYLIST_ID = 'PLU-G4F_Bmqg0';
+  const DEFAULT_PLAYLIST_ID = 'PLW1Xp7ZQlPZY';
 
   // ?list=プレイリストID または ?list=プレイリストのフルURL で上書き可能
   function getPlaylistId() {
@@ -87,6 +91,15 @@
 
   function showPlayer() { wrapEl.classList.add('visible'); }
   function hidePlayer() { wrapEl.classList.remove('visible'); }
+
+  // 8秒経っても再生が始まらない場合、原因が分かるようにメッセージを表示する
+  setTimeout(() => {
+    if (!initialized) {
+      const diag = document.getElementById('diag');
+      diag.style.display = 'block';
+      diag.textContent = '動画を読み込めませんでした。広告ブロッカー/コンテンツブロッカーの拡張機能を無効にするか、別のブラウザ・最新版のOBSでお試しください。';
+    }
+  }, 8000);
 
   function onYouTubeIframeAPIReady() {
     player = new YT.Player('player', {
