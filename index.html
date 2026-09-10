@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>OBS用 ランダム再生リンク生成</title>
+<style>
+  body {
+    font-family: -apple-system, "Hiragino Kaku Gothic ProN", sans-serif;
+    max-width: 640px;
+    margin: 40px auto;
+    padding: 0 16px;
+    line-height: 1.7;
+    color: #222;
+  }
+  h1 { font-size: 22px; }
+  input[type=text] {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 10px;
+    font-size: 15px;
+    margin-bottom: 12px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+  }
+  button {
+    font-size: 15px;
+    padding: 8px 16px;
+    cursor: pointer;
+    border: 1px solid #888;
+    border-radius: 4px;
+    background: #fafafa;
+  }
+  button:hover { background: #eee; }
+  #result { margin-top: 24px; display: none; }
+  #urlBox {
+    background: #f4f4f4;
+  }
+  .hint { color: #666; font-size: 13px; }
+  .copied { color: #2a7a2a; font-size: 13px; margin-left: 8px; }
+</style>
+</head>
+<body>
+<h1>OBS用 ランダム再生URL生成</h1>
+<p>YouTubeのプレイリストのURL、またはIDを貼り付けてください。</p>
+<input type="text" id="playlistInput" placeholder="https://www.youtube.com/playlist?list=PLxxxxxxxxxxxxxxxx">
+<button onclick="generate()">URLを生成</button>
+
+<div id="result">
+  <p>以下のURLをOBSの「ブラウザ」ソースのURL欄にそのまま貼り付けてください。</p>
+  <input type="text" id="urlBox" readonly onclick="this.select()">
+  <button onclick="copyUrl()">コピー</button>
+  <span class="copied" id="copiedMsg" style="display:none;">コピーしました</span>
+  <p class="hint">音量は自動でミュートされます。ブラウザソースのサイズは幅1280×高さ720程度を推奨します。</p>
+</div>
+
+<script>
+  function extractId(input) {
+    input = input.trim();
+    const match = input.match(/[?&]list=([^&]+)/);
+    if (match) return decodeURIComponent(match[1]);
+    return input;
+  }
+
+  function currentDir() {
+    const clean = window.location.href.split('?')[0].split('#')[0];
+    return clean.substring(0, clean.lastIndexOf('/') + 1);
+  }
+
+  function generate() {
+    const raw = document.getElementById('playlistInput').value;
+    if (!raw) return;
+    const id = extractId(raw);
+    const url = currentDir() + 'player.html?list=' + encodeURIComponent(id);
+    document.getElementById('urlBox').value = url;
+    document.getElementById('result').style.display = 'block';
+    document.getElementById('copiedMsg').style.display = 'none';
+  }
+
+  function copyUrl() {
+    const box = document.getElementById('urlBox');
+    box.select();
+    document.execCommand('copy');
+    document.getElementById('copiedMsg').style.display = 'inline';
+  }
+</script>
+</body>
+</html>
