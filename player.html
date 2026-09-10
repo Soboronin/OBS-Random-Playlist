@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Random Playlist Player</title>
+<style>
+  html, body {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100%;
+    background: #000;
+    overflow: hidden;
+  }
+  /* 外側:はみ出した部分を切り取るための枠 */
+  #crop {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+  }
+  /* 内側:プレイヤー本体(等倍表示) */
+  #player-wrap {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+  }
+  #player-wrap.visible {
+    opacity: 1;
+    transition: opacity 0.5s ease;
+  }
+  #player {
+    width: 100%;
+    height: 100%;
+  }
+</style>
+</head>
+<body>
+<div id="crop">
+  <div id="player-wrap">
+    <div id="player"></div>
+  </div>
+</div>
+
+<script src="https://www.youtube.com/iframe_api"></script>
+<script>
+  // デフォルトのプレイリストID(URLで指定がない場合に使われます)
+  const DEFAULT_PLAYLIST_ID = 'PLU-G4F_Bmqg0';
+
+  // ?list=プレイリストID または ?list=プレイリストのフルURL で上書き可能
+  function getPlaylistId() {
+    const params = new URLSearchParams(window.location.search);
+    const raw = params.get('list');
+    if (!raw) return DEFAULT_PLAYLIST_ID;
+    const match = raw.match(/[?&]list=([^&]+)/);
+    if (match) return decodeURIComponent(match[1]);
+    return raw;
+  }
+
+  const PLAYLIST_ID = getPlaylistId();
+  const START_HIDE_MS = 1200;   // 開始直後、タイトルバーが消えるまでの待ち時間
+  const END_SKIP_SEC = 1.5;     // 終了何秒前に次へ切り替えるか
+
+  let player;
+  let lastIndex = -1;
+  let initialized = false;
+  let switching = false;
+  let playToken = 0;
+  let endWatcher = null;
+  const wrapEl = document.getElementById('player-wrap');
+
+  function showPlayer() { wrapEl.classList.add('visible'); }
+  function hidePlayer() { wrapEl.classList.remove('visible'); }
+
+  function onYouTubeIframeAPIReady() {
+    player = new YT.Player('player', {
+      width: '100%',
+      height: '100%',
+      playerVars: {
+        autoplay: 1,
+        mute: 1,
+        controls: 0,
+        disablekb: 1,
+        fs: 0,
+        iv_load_policy: 3,
+        modestbranding: 1,
+        rel: 0,
+        playsinline: 1,
+        cc_load_policy: 0,
+        origin: window.location.origin,
+        listType: 'playlist',
+        list: PLAYLIST_ID
+      },
+      events: {
+        onReady: onPlayerReady,
+        onStateChange: onPlayerStateChange,
+        onError: onPlayerError
+      }
+    });
+  }
+
+  function onPlayerReady(event) {
+    event.target.mute();
+    event.target.setVolume(0);
+    disableCaptions(event.target);
+    event.target.playVideo();
+  }
+
+  function disableCaptions(p) {
+    try {
+      p.unloadModule('captions');
+      p.setOption('captions', 'track', {});
+    } catch (e) {
+      // 対応していない場合は無視
+    }
+  }
+
+  function scheduleJump() {
+    if (switching) return;
+    switching = true;
+    jumpRandom();
+    setTimeout(() => { switching = false; }, 800);
+  }
+
+  function onPlayerStateChange(event) {
+    const state = event.data;
+
+    if (!initialized && (state === YT.PlayerState.PLAYING || state === YT.PlayerState.CUED)) {
+      initialized = true;
+      scheduleJump();
+    }
+    if (state === YT.PlayerState.ENDED) {
+      scheduleJump();
+    }
+
+    if (state === YT.PlayerState.PLAYING) {
+      disableCaptions(player);
+      stopEndWatcher();
+      startEndWatcher();
+
+      hidePlayer();
+      playToken++;
+      const token = playToken;
+      setTimeout(() => {
+        if (token === playToken) showPlayer();
+      }, START_HIDE_MS);
+    } else {
+      hidePlayer();
+      stopEndWatcher();
+    }
+
+    if (state === YT.PlayerState.PAUSED || state === YT.PlayerState.UNSTARTED) {
+      player.playVideo();
+    }
+  }
+
+  function startEndWatcher() {
+    endWatcher = setInterval(() => {
+      if (!player || typeof player.getDuration !== 'function') return;
+      const duration = player.getDuration();
+      const current = player.getCurrentTime();
+      if (duration > 0 && duration - current <= END_SKIP_SEC) {
+        scheduleJump();
+      }
+    }, 500);
+  }
+
+  function stopEndWatcher() {
+    if (endWatcher) {
+      clearInterval(endWatcher);
+      endWatcher = null;
+    }
+  }
+
+  function onPlayerError(event) {
+    scheduleJump();
+  }
+
+  function jumpRandom() {
+    const list = player.getPlaylist();
+    if (!list || list.length === 0) return;
+    let idx;
+    do {
+      idx = Math.floor(Math.random() * list.length);
+    } while (list.length > 1 && idx === lastIndex);
+    lastIndex = idx;
+    player.playVideoAt(idx);
+  }
+</script>
+</body>
+</html>
